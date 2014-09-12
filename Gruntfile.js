@@ -82,7 +82,8 @@ module.exports = function( grunt ) {
                                 'jquery.xpath': 'jquery-xpath/jquery.xpath',
                                 'jquery.touchswipe': 'jquery-touchswipe/jquery.touchSwipe',
                                 'leaflet': 'leaflet/leaflet',
-                                'bootstrap-slider': 'bootstrap-slider/js/bootstrap-slider'
+                                'bootstrap-slider': 'bootstrap-slider/js/bootstrap-slider',
+                                'q': 'bower-components/q/q'
                             },
                             shim: {
                                 'xpath': {
