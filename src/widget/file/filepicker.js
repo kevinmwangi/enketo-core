@@ -5,15 +5,7 @@ define( [ 'jquery', 'enketo-js/Widget', 'file-manager' ], function( $, Widget, f
 
     /**
      * FilePicker that works both offline and online. It abstracts the file storage/cache away
-     * with the injected fileManager that has the following methods:
-     *
-     * - isSupported() : whether the file storage/cache method is supported on the browser
-     * - init() : async initalization, returning promise
-     * - getFileUrl(filename | file) : async return promise with the fileUrl to be used for previews
-     * - getFiles(instanceId?) : async returns promise with files belonging to the specified instanceID
-     *
-     * The fileManager will publish the 'ready' event when it is ready as some file storage
-     * may require user permissions.
+     * with the injected fileManager.
      *
      * @constructor
      * @param {Element} element [description]
@@ -38,7 +30,7 @@ define( [ 'jquery', 'enketo-js/Widget', 'file-manager' ], function( $, Widget, f
     Filepicker.prototype.constructor = Filepicker;
 
     /**
-     * initialize
+     * Initialize
      */
     Filepicker.prototype._init = function() {
         var $input = $( this.element ),
@@ -47,30 +39,47 @@ define( [ 'jquery', 'enketo-js/Widget', 'file-manager' ], function( $, Widget, f
 
         this.mediaType = $input.attr( 'accept' );
 
-        $input.parent().addClass( 'with-media clearfix' );
+        $input.addClass( 'transparent' ).parent().addClass( 'with-media clearfix' );
 
-        this.$fakeInput = $input.after( '<div class="fake-input"></div>' );
+        this.$widget = $(
+            '<div class="widget file-picker">' +
+            '<div class="fake-file-input"></div>' +
+            '<div class="file-feedback"></div>' +
+            '<div class="file-preview"></div>' +
+            '</div>' )
+            .insertAfter( $input );
+        this.$feedback = this.$widget.find( '.file-feedback' );
+        this.$preview = this.$widget.find( '.file-preview' );
+        this.$fakeInput = this.$widget.find( '.fake-file-input' );
 
+        // show loaded file name regardless of whether widget is supported
         if ( existingFileName ) {
             this._showFileName( existingFileName, mediaType );
+            $input.removeAttr( 'data-loaded-file-name' );
         }
 
-        if ( !fileManager.isSupported() ) {
+        if ( !fileManager || !fileManager.isSupported() ) {
             this._showFeedback( 'File Uploads not supported in this browser.', 'warning' );
             return;
+        }
+
+        if ( fileManager.isWaitingForPermissions() ) {
+            this._showFeedback( 'Waiting for user permissions.', 'warning' );
         }
 
         fileManager.init()
             .then( function() {
                 that._changeListener();
                 if ( existingFileName ) {
-                    that._createPreview( fileManager.getFile( existingFileName ) );
+                    fileManager.getFileUrl( existingFileName )
+                        .then( function( url ) {
+                            that._showPreview( url, that.mediaType );
+                        } );
                 }
             } )
             .catch( function( error ) {
                 that._showFeedback( error.message, 'error' );
             } );
-        // TODO: show "waiting for approval" message?
     };
 
     Filepicker.prototype._getMaxSubmissionSize = function() {
@@ -79,83 +88,71 @@ define( [ 'jquery', 'enketo-js/Widget', 'file-manager' ], function( $, Widget, f
     };
 
     Filepicker.prototype._changeListener = function() {
-        var that = this,
-            $input = $( this.element );
+        var that = this;
 
-        $input.on( 'change.passthrough.' + this.namespace, function( event ) {
-            var prevFileName, file, $preview;
+        $( this.element ).on( 'change.passthrough.' + this.namespace, function( event ) {
+            var file,
+                $input = $( this );
 
+            // trigger eventhandler to update instance value
             if ( event.namespace === 'passthrough' ) {
                 $input.trigger( 'change.file' );
                 return false;
             }
-            prevFileName = $input.attr( 'data-previous-file-name' );
-            file = $input[ 0 ].files[ 0 ];
 
-            $input.siblings( '.file-preview, .file-loaded' ).remove();
+            // get the file
+            file = this.files[ 0 ];
 
+            // process the file
             fileManager.getFileUrl( file )
                 .then( function( url ) {
-                    $preview = that._createPreview( url, that.mediaType );
-                    $input.attr( 'data-previous-file-name', file.name )
-                        .removeAttr( 'data-loaded-file-name' );
-                    //.siblings( '.file-loaded' ).remove();
-                    $input.trigger( 'change.passthrough' ).after( $preview );
+                    that._showPreview( url, that.mediaType );
+                    that._showFeedback( '' );
+                    that._showFileName( file );
+                    $input.trigger( 'change.passthrough' );
                 } )
                 .catch( function( error ) {
-                    // TODO: empty the things
-
+                    $input.val( '' );
+                    that._showPreview( null );
                     that._showFeedback( error.message, 'error' );
                 } );
         } );
     };
 
-    Filepicker.prototype._showFileName = function( fileName ) {
+    Filepicker.prototype._showFileName = function( file ) {
+        var fileName = ( file && file.name ) ? file.name : '';
         this.$fakeInput.text( fileName );
     };
 
     Filepicker.prototype._showFeedback = function( message, status ) {
-        if ( !this.$feedback || this.$feedback.length === 0 ) {
-            this.$feedback = $( '<div class="file-feedsfback"></div>' ).insertAfter( this.$fakeInput );
-        }
+        status = status || '';
         // replace text and replace all existing classes with the new status class
-        this.$feedback.text( message ).attr( 'class', status );
-        console.debug( 'feedback element', this.$feedback[ 0 ] );
+        this.$feedback.text( message ).attr( 'class', 'file-feedback ' + status );
     };
 
-    Filepicker.prototype._createPreview = function( url, mediaType ) {
-        var $preview;
+    Filepicker.prototype._showPreview = function( url, mediaType ) {
+        var $el;
+
+        this.$widget.find( '.file-preview' ).empty();
 
         switch ( mediaType ) {
             case 'image/*':
-                $preview = $( '<img />' );
+                $el = $( '<img />' );
                 break;
             case 'audio/*':
-                $preview = $( '<audio controls="controls"/>' );
+                $el = $( '<audio controls="controls"/>' );
                 break;
             case 'video/*':
-                $preview = $( '<video controls="controls"/>' );
+                $el = $( '<video controls="controls"/>' );
                 break;
             default:
-                $preview = $( '<span>No preview for this mediatype</span>' );
+                $el = $( '<span>No preview for this mediatype</span>' );
                 break;
         }
 
-        return $preview.addClass( 'file-preview' ).attr( 'src', url );
-    };
-
-    Filepicker.prototype.destroy = function( element ) {
-        $( element )
-        //data is not used elsewhere by enketo
-        .removeData( this.namespace )
-        //remove all the event handlers that used this.namespace as the namespace
-        .off( '.' + this.namespace )
-        //show the original element
-        .show()
-        //remove elements immediately after the target that have the widget class
-        .next( '.widget' ).remove().end()
-        //console.debug( this.namespace, 'destroy' );
-        .siblings( '.file-feedback, .file-preview, .file-loaded' ).remove();
+        if ( url ) {
+            this.$preview.append( $el.attr( 'src', url ) );
+        }
     };
 
     $.fn[ pluginName ] = function( options, event ) {

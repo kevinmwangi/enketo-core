@@ -13,6 +13,10 @@ define( [ "q" ], function( Q ) {
     var maxSize,
         supported = typeof FileReader === 'function';
 
+    /**
+     * Initialize the file manager .
+     * @return {[type]} promise boolean or rejection with Error
+     */
     function init() {
         var deferred = Q.defer();
 
@@ -25,15 +29,36 @@ define( [ "q" ], function( Q ) {
         return deferred.promise;
     }
 
+    /**
+     * Whether filemanager is supported in browser
+     * @return {Boolean}
+     */
     function isSupported() {
         return supported;
     }
 
+    /**
+     * Whether the filemanager is waiting for user permissions
+     * @return {Boolean} [description]
+     */
+    function isWaitingForPermissions() {
+        return false;
+    }
+
+    /**
+     * Obtains a url that can be used to show a preview of the file when used
+     * as a src attribute.
+     *
+     * @param  {?string|Object} subject File or filename
+     * @return {[type]}         promise url string or rejection with Error
+     */
     function getFileUrl( subject ) {
         var error, reader,
             deferred = Q.defer();
 
-        if ( typeof subject === 'string' ) {
+        if ( !subject ) {
+            deferred.resolve( null );
+        } else if ( typeof subject === 'string' ) {
             // TODO obtain from storage
         } else if ( typeof subject === 'object' ) {
             if ( _isTooLarge( subject ) ) {
@@ -51,11 +76,18 @@ define( [ "q" ], function( Q ) {
                 };
                 reader.readAsDataURL( subject );
             }
+        } else {
+            deferred.reject( new Error( 'Unknown error occurred' ) );
         }
         return deferred.promise;
     }
 
-    function getFiles() {
+    /**
+     * Obtain files belonging to the specified instanceID
+     * @param { string? } id instanceID, defaults to current instanceID
+     * @return {[File]} array of files
+     */
+    function getFiles( id ) {
         var file,
             deferred = Q.defer(),
             files = [];
@@ -70,10 +102,19 @@ define( [ "q" ], function( Q ) {
         return deferred.promise;
     }
 
+    /**
+     * Whether the file is too large too handle and should be rejected
+     * @param  {[type]}  file the File
+     * @return {Boolean}
+     */
     function _isTooLarge( file ) {
         return file && file.size > _getMaxSize();
     }
 
+    /**
+     * Returns the maximum size of a file
+     * @return {Number}
+     */
     function _getMaxSize() {
         if ( !maxSize ) {
             maxSize = $( document ).data( 'maxSubmissionSize' ) || 5 * 1024 * 1024;
@@ -83,6 +124,7 @@ define( [ "q" ], function( Q ) {
 
     return {
         isSupported: isSupported,
+        isWaitingForPermissions: isWaitingForPermissions,
         init: init,
         getFileUrl: getFileUrl,
         getFiles: getFiles
