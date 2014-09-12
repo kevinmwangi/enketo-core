@@ -150,7 +150,7 @@ module.exports = function( grunt ) {
                         widgets.forEach( function( widget, index, arr ) {
                             arr.push( 'text!' + widget.substr( 0, widget.lastIndexOf( '/' ) + 1 ) + 'config.json' );
                         } );
-                        return [ 'require.js' ].concat( widgets );
+                        return [ './bower-components/requirejs/require.js' ].concat( widgets );
                     } )(),
                     out: "build/js/combined.min.js",
                     optimize: "uglify2"
@@ -211,9 +211,9 @@ module.exports = function( grunt ) {
 
     } );
 
-    grunt.registerTask( 'compile', [ 'requirejs:compile' ] );
-    grunt.registerTask( 'test', [ 'jsbeautifier:test', 'jshint', 'connect:test', 'compile', 'jasmine' ] );
+    grunt.registerTask( 'compile', [ 'modernizr', 'requirejs:compile' ] );
+    grunt.registerTask( 'test', [ 'modernizr', 'jsbeautifier:test', 'jshint', 'connect:test', 'compile', 'jasmine' ] );
     grunt.registerTask( 'style', [ 'prepWidgetSass', 'sass' ] );
     grunt.registerTask( 'server', [ 'connect:server:keepalive' ] );
-    grunt.registerTask( 'default', [ 'jshint', 'prepWidgetSass', 'sass', 'test' ] );
+    grunt.registerTask( 'default', [ 'modernizr', 'jshint', 'prepWidgetSass', 'sass', 'test' ] );
 };

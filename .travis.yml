@@ -1,8 +1,8 @@
 before_install:
   - git submodule update --init --recursive
-  - bower install
 language: node_js
 node_js:
   - "0.11"
 before_script:
   - npm install -g grunt-cli bower
+  - bower install
