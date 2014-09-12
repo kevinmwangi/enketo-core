@@ -1,5 +1,6 @@
 before_install:
   - git submodule update --init --recursive
+  - bower install
 language: node_js
 node_js:
   - "0.11"

@@ -7,6 +7,7 @@ requirejs.config( {
         "text": "text/text",
         "xpath": "xpath/build/xpathjs_javarosa",
         "file-manager": "../src/js/file-manager",
+        "jquery": "bower-components/jquery/dist/jquery",
         "jquery.xpath": "jquery-xpath/jquery.xpath",
         "jquery.touchswipe": "jquery-touchswipe/jquery.touchSwipe",
         "leaflet": "leaflet/leaflet",
