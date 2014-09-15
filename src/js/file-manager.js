@@ -7,7 +7,7 @@
  * types.
  */
 
-define( [ "q" ], function( Q ) {
+define( [ "q", "jquery" ], function( Q, $ ) {
     "use strict";
 
     var maxSize,

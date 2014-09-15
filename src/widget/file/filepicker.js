@@ -39,7 +39,10 @@ define( [ 'jquery', 'enketo-js/Widget', 'file-manager' ], function( $, Widget, f
 
         this.mediaType = $input.attr( 'accept' );
 
-        $input.addClass( 'transparent' ).parent().addClass( 'with-media clearfix' );
+        $input
+            .attr( 'disabled', 'disabled' )
+            .addClass( 'transparent' )
+            .parent().addClass( 'with-media clearfix' );
 
         this.$widget = $(
             '<div class="widget file-picker">' +
@@ -54,7 +57,7 @@ define( [ 'jquery', 'enketo-js/Widget', 'file-manager' ], function( $, Widget, f
 
         // show loaded file name regardless of whether widget is supported
         if ( existingFileName ) {
-            this._showFileName( existingFileName, mediaType );
+            this._showFileName( existingFileName, this.mediaType );
             $input.removeAttr( 'data-loaded-file-name' );
         }
 
@@ -69,7 +72,9 @@ define( [ 'jquery', 'enketo-js/Widget', 'file-manager' ], function( $, Widget, f
 
         fileManager.init()
             .then( function() {
+                that._showFeedback();
                 that._changeListener();
+                $input.removeAttr( 'disabled' );
                 if ( existingFileName ) {
                     fileManager.getFileUrl( existingFileName )
                         .then( function( url ) {
@@ -125,6 +130,7 @@ define( [ 'jquery', 'enketo-js/Widget', 'file-manager' ], function( $, Widget, f
     };
 
     Filepicker.prototype._showFeedback = function( message, status ) {
+        message = message || '';
         status = status || '';
         // replace text and replace all existing classes with the new status class
         this.$feedback.text( message ).attr( 'class', 'file-feedback ' + status );
