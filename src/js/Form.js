@@ -281,17 +281,17 @@ define( [ 'enketo-js/FormModel', 'enketo-js/widgets', 'jquery', 'enketo-js/plugi
                 }
 
                 // if record is not local, copy instanceID value to deprecatedID and empty instanceID
-                if ( !unsubmitted ) {
-                    // add deprecatedID node
-                    if ( model.node( '*>meta>deprecatedID' ).get().length !== 1 ) {
-                        var deprecatedIDXMLNode = $.parseXML( "<deprecatedID/>" ).documentElement;
-                        document.adoptNode( deprecatedIDXMLNode );
-                        $( deprecatedIDXMLNode ).appendTo( model.node( '*>meta' ).get() );
-                    }
+                // if ( !unsubmitted ) {
+                //     // add deprecatedID node
+                //     if ( model.node( '*>meta>deprecatedID' ).get().length !== 1 ) {
+                //         var deprecatedIDXMLNode = $.parseXML( "<deprecatedID/>" ).documentElement;
+                //         document.adoptNode( deprecatedIDXMLNode );
+                //         $( deprecatedIDXMLNode ).appendTo( model.node( '*>meta' ).get() );
+                //     }
 
-                    model.node( '*>meta>deprecatedID' ).setVal( instanceID.getVal()[ 0 ], null, 'string' );
-                    instanceID.setVal( '', null, 'string' );
-                }
+                //     model.node( '*>meta>deprecatedID' ).setVal( instanceID.getVal()[ 0 ], null, 'string' );
+                //     instanceID.setVal( '', null, 'string' );
+                // }
             };
 
             // Implements jr:choice-name
